@@ -1,8 +1,5 @@
 #!/usr/bin/env sh
 
-# Integrate LOOT for Linux
-# https://apocalyptech.com/games/loot-linux/
-
 # Mod directory layout
 # ./
 # ├─ order
