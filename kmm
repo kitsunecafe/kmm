@@ -1,0 +1,89 @@
+#!/usr/bin/env sh
+
+# Integrate LOOT for Linux
+# https://apocalyptech.com/games/loot-linux/
+
+# Mod directory layout
+# ./
+# ├─ order
+# ├─ mod_a/
+# ├─ mod_b/
+
+CMD=fuse-overlayfs
+
+if ! command -v $CMD &>/dev/null; then
+  echo "$CMD not found" >&2
+  exit 1
+fi
+
+print_help() {
+  echo "Usage: kmm [OPTION] [SOURCE] [TARGET]"
+  echo "Mount a SOURCE directory over a TARGET mountpoint"
+  echo
+  printf '%4s-v, --verbose %11s display verbose logging\n'
+  printf '%4s-h, --help %14s display this message and exit\n'
+}
+
+vecho() {
+  if [ -n "$VERBOSE"  ]; then
+    echo "$1"
+  fi
+}
+
+POSITIONAL_ARGS=()
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -v|--verbose)
+      VERBOSE=YES
+      shift # past argument
+      ;;
+    -h|--help)
+      print_help
+      exit
+      ;;
+    -*|--*)
+      echo "Unknown option $1"
+      exit 1
+      ;;
+    *)
+      POSITIONAL_ARGS+=("$1") # save positional arg
+      shift # past argument
+      ;;
+  esac
+done
+
+set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
+
+MOD_DIR="$1"
+GAME_DIR="$2"
+HASH_FILE="$MOD_DIR/.hash"
+LAYER_FILE="$MOD_DIR/layers"
+WORKDIR="$MOD_DIR/.work"
+DIFFDIR="$MOD_DIR/.diff"
+
+
+LAYERS=$(cd "$MOD_DIR"; ls -d */)
+NEW_HASH=$(echo "$LAYERS" | md5sum - | awk '{ print $1 }')
+if [ -f "$HASH_FILE" ]; then
+  OLD_HASH=$(cat $HASH_FILE)
+fi
+
+if [ ! -f "$LAYER_FILE" ] || [ ! -f "$HASH_FILE" ] || [ "$NEW_HASH" != "$OLD_HASH" ]; then
+  vecho "Recreating $HASH_FILE and $LAYER_FILE"
+  echo "$NEW_HASH" > "$HASH_FILE"
+  echo "$LAYERS" > "$LAYER_FILE"
+fi
+
+LAYERS=$(cat "$LAYER_FILE")
+
+LOWER=$(echo "$LAYERS" | sed -r "s|^(.*)$|${MOD_DIR}/\\1|g" | tr '\n' ':' | sed "s/:*$//")
+
+mkdir -p "$WORKDIR"
+mkdir -p "$DIFFDIR"
+
+vecho "Issuing command:"
+vecho "  $CMD -o \"lowerdir=$LOWER,workdir=$WORKDIR\" $GAME_DIR"
+
+$CMD -o "lowerdir=$LOWER,upperdir=$DIFFDIR,workdir=$WORKDIR" $GAME_DIR
+
