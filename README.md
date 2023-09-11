@@ -19,5 +19,5 @@ The only requirement is `fuse-overlayfs` since this is basically a convenience w
 - [x] Mount variable amount of dirs over target
 - [x] Configurable layer order
 - [ ] Automount
-- [ ] Use WinSCP for Windows compatibility
+- [ ] Use WinFSP for Windows compatibility
 
