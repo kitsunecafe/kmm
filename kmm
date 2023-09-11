@@ -2,9 +2,12 @@
 
 # Mod directory layout
 # ./
-# ├─ order
+# ├─ .diff/
+# ├─ .hash
+# ├─ layers
 # ├─ mod_a/
 # ├─ mod_b/
+# ├─ .work/
 
 CMD=fuse-overlayfs
 
