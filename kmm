@@ -56,7 +56,7 @@ done
 set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
 
 MOD_DIR="$1"
-GAME_DIR="$2"
+GAME_DIR=$(readlink -f "$2")
 HASH_FILE="$MOD_DIR/.hash"
 LAYER_FILE="$MOD_DIR/layers"
 WORKDIR="$MOD_DIR/.work"
@@ -78,12 +78,13 @@ fi
 LAYERS=$(cat "$LAYER_FILE")
 
 LOWER=$(echo "$LAYERS" | sed -r "s|^(.*)$|${MOD_DIR}/\\1|g" | tr '\n' ':' | sed "s/:*$//")
+LOWER=$LOWER:$GAME_DIR
 
 mkdir -p "$WORKDIR"
 mkdir -p "$DIFFDIR"
 
 vecho "Issuing command:"
-vecho "  $CMD -o \"lowerdir=$LOWER,workdir=$WORKDIR\" $GAME_DIR"
+vecho "  $CMD -o \"lowerdir=$LOWER,workdir=$WORKDIR\" '$GAME_DIR'"
 
-$CMD -o "lowerdir=$LOWER,upperdir=$DIFFDIR,workdir=$WORKDIR" $GAME_DIR
+$CMD -o "lowerdir=$LOWER,upperdir=$DIFFDIR,workdir=$WORKDIR" "$GAME_DIR"
 
